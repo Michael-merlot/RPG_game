@@ -150,28 +150,48 @@ namespace RPG_game
             Console.WriteLine($"Вы исследуете: {currentLocation.Name}");
 
             Random random = new Random();
-            int eventType = random.Next(3);
+            int eventType = random.Next(10);
 
             switch (eventType)
             {
                 case 0:
+                case 1:
+                case 2:
                     Console.WriteLine("Вы ничего не нашли здесь");
                     break;
-                case 1:
+                case 3:
+                case 4:
                     int gold = random.Next(1, 10);
                     player.Gold = gold;
                     Console.WriteLine($"Вы нашли: {gold} золота!");
                     break;
-                case 2:
-                    int damage = random.Next(5, 15);
-                    player.Health -= damage;
-                    Console.WriteLine($"Вы столкнулись с врагом и потеряли {damage} здоровья!");
-                    Console.WriteLine("(В будущем будет продуманная боёвка, рекомендую подождать)");
+                case 5:
+                    Item foundItem = GenerateRandomItem();
+                    player.AddItem(foundItem);
+                    break;
+                case 6:
+                case 7:
+                case 8:
+                case 9:
+                    Enemy enemy = EnemyFactory.CreateRandomEnemy(currentLocation.Name, player.Level);
+                    Console.WriteLine($"Вы столкнулись с врагом: {enemy.Name}!");
+                    Console.WriteLine("Нажмите любую клавишу, чтобы начать бой...");
+                    Console.ReadKey(true);
+
+                    CombatSystem combatSystem = new CombatSystem();
+                    bool playerWon = combatSystem.StartCombat(player, enemy);
+
+                    if (!playerWon)
+                    {
+                        isRunning = false;
+                        return;
+                    }
+
                     break;
             }
 
             Console.WriteLine("Нажмите любую клавишу для продолжения...");
-            Console.ReadKey();
+            Console.ReadKey(true);
         }
 
         private void Travel()
@@ -216,6 +236,32 @@ namespace RPG_game
 
             Console.WriteLine("\nНажмите любую клавишу для продолжения...");
             Console.ReadKey(true);
+        }
+
+        private Item GenerateRandomItem()
+        {
+            Random random = new Random();
+            int itemType = random.Next(3);
+
+            switch (itemType)
+            {
+                case 0:
+                    string[] weaponNames = { "Кинжал", "Короткий меч", "Топор", "Булава", "Лук" };
+                    string weaponName = weaponNames[random.Next(weaponNames.Length)];
+                    int damage = 3 + random.Next(1, 4) + player.Level;
+                    return new Weapon(weaponName, $"Урон: {damage}", damage, damage * 5);
+
+                case 1:
+                    string[] armorNames = { "Кожаная куртка", "Кольчуга", "Щит", "Стальной нагрудник", "Шлем" };
+                    string armorName = armorNames[random.Next(armorNames.Length)];
+                    int defense = 1 + random.Next(1, 3) + player.Level / 2;
+                    return new Armor(armorName, $"Защита: {defense}", defense, defense * 8);
+
+                case 2:
+                default:
+                    int healAmount = 15 + random.Next(5, 16) + player.Level * 3;
+                    return new HealthPotion("Зелье здоровья", $"Восстанавливает {healAmount} здоровья", healAmount, healAmount / 2);
+            }
         }
     }
 }
