@@ -1,4 +1,4 @@
-﻿using RPG_game.Combat;
+﻿using RPG_game;
 using System;
 using System.Collections.Generic;
 using System.Linq;

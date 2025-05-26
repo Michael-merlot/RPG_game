@@ -4,20 +4,20 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace RPG_game.Combat
+namespace RPG_game
 {
     public class Enemy
     {
         public string Name { get; private set; }
         public string Description { get; private set; }
         public int Health { get; set; }
-        public int MaxHealth { get; private set; }
-        public int AttackPower { get; private set; }
-        public int Defense { get; private set; }
+        public int MaxHealth { get; set; }
+        public int AttackPower { get; set; }
+        public int Defense { get; set; }
         public int DefenseBonus { get; set; }
         public int Level { get; private set; }
-        public int ExpReward { get; private set; }
-        public int GoldReward { get; private set; }
+        public int ExpReward { get; set; }
+        public int GoldReward { get; set; }
 
         public Enemy(string name, string description, int level)
         {
