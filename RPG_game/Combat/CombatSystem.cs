@@ -43,8 +43,6 @@ namespace RPG_game
                     return true;
                 }
 
-                Thread.Sleep(500);
-
                 EnemyTurn();
 
                 if (player.Health <= 0)
