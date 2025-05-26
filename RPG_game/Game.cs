@@ -218,24 +218,236 @@ namespace RPG_game
 
         private void ShowInventory()
         {
-            Console.Clear();
-            Console.WriteLine("=== Инвентарь ===");
-            Console.WriteLine($"Золото: {player.Gold}");
+            bool exitInventory = false;
 
-            if (player.Inventory.Count == 0)
+            while (!exitInventory)
             {
-                Console.WriteLine("Инвентарь пуст");
-            }
-            else if (player.Inventory.Count >= 1)
-            {
-                for (int i = 0; i < player.Inventory.Count; i++)
+                Console.Clear();
+                Console.WriteLine("=== Инвентарь и Экипировка ===");
+
+                Console.WriteLine("\nТекущее снаряжение: ");
+                Console.WriteLine($"Оружие: {player.EquippedWeapon.Name} (Урон: {player.EquippedWeapon.Damage})");
+                Console.WriteLine($"Броня: {player.EquippedArmor.Name} (Защита: {player.EquippedArmor.Defense})");
+
+                Console.WriteLine("\nХарактеристики:");
+                Console.WriteLine($"Сила: {player.Strength}");
+                Console.WriteLine($"Ловкость: {player.Dexterity}");
+                Console.WriteLine($"Телосложение: {player.Constitution}");
+
+                Console.WriteLine($"\nИтоговый урон: {player.GetAttackDamage()}");
+                Console.WriteLine($"Итоговая защита: {player.GetDefense()}");
+
+                Console.WriteLine($"Золото: {player.Gold}");
+
+                Console.WriteLine("\nПредметы: ");
+
+                if (player.Inventory.Count == 0)
                 {
-                    Console.WriteLine($"{i + 1} - {player.Inventory[i].Name}");
+                    Console.WriteLine("Инвентарь пуст");
+                }
+                else
+                {
+                    for (int i = 0; i < player.Inventory.Count; i++)
+                    {
+                        string itemType = player.Inventory[i] is Weapon ? "[Оружие]" :
+                            player.Inventory[i] is Armor ? "[Броня]" :
+                            player.Inventory[i] is UsableItem ? "[Предмет]" : "";
+
+                        Console.WriteLine($"{i + 1} - {itemType} {player.Inventory[i].Name} - {player.Inventory[i].Description}");
+                    }
+
+                    Console.WriteLine($"\nДействия: [и]спользовать, [э]кипировать, [в]ыход");
+                    Console.Write("\nВыберите действие (или номер предмета для подробностей): ");
+
+                    string input = Console.ReadLine().ToLower();
+
+                    if (input == "и" || input == "использовать")
+                    {
+                        UseItem();
+                    }
+                    else if (input == "э" || input == "экипировать")
+                    {
+                        EquipItem();
+                    }
+                    else if (input == "в" || input == "выход")
+                    {
+                        exitInventory = true;
+                    }
+                    else if (int.TryParse(input, out int itemIndex) && itemIndex > 0 && itemIndex <= player.Inventory.Count)
+                    {
+                        ShowItemDetails(player.Inventory[itemIndex - 1]);
+                    }
+                    else
+                    {
+                        Console.WriteLine("Неверный выбор. Нажмите любую клавишу...");
+                        Console.ReadKey(true);
+                    }
                 }
             }
 
             Console.WriteLine("\nНажмите любую клавишу для продолжения...");
             Console.ReadKey(true);
+        }
+
+        private void ShowItemDetails(Item item)
+        {
+            Console.Clear();
+            Console.WriteLine($"=== {item.Name} ===");
+            Console.WriteLine($"Описание: {item.Description}");
+            Console.WriteLine($"Стоимость: {item.Value} золота");
+
+            if (item is Weapon weapon)
+            {
+                Console.WriteLine($"Тип: Оружие");
+                Console.WriteLine($"Урон: {weapon.Damage}");
+                Console.WriteLine($"\nТекущее оружие: {player.EquippedWeapon.Name} (Урон: {player.EquippedWeapon.Damage})");
+            }
+            else if (item is Armor armor)
+            {
+                Console.WriteLine($"Тип: Броня");
+                Console.WriteLine($"Защита: {armor.Defense}");
+                Console.WriteLine($"\nТекущая броня: {player.EquippedArmor.Name} (Защита: {player.EquippedArmor.Defense})");
+            }
+            else if (item is UsableItem)
+            {
+                Console.WriteLine($"Тип: Расходуемый предмет");
+
+                if (item is HealthPotion potion)
+                {
+                    Console.WriteLine($"Восстановление здоровья: {potion.HealAmount}");
+                }
+            }
+
+            Console.WriteLine("\nДействия: ");
+
+            if (item is Weapon)
+            {
+                Console.WriteLine("1. Экипировать");
+            }
+            else if (item is Armor)
+            {
+                Console.WriteLine("1. Экипировать");
+            }
+            else if (item is UsableItem)
+            {
+                Console.WriteLine("1. Использовать");
+            }
+
+            Console.WriteLine("2. Выбросить");
+            Console.WriteLine("0. Назад");
+
+            Console.Write("\nВаш выбор: ");
+            string choice = Console.ReadLine();
+
+            switch (choice)
+            {
+                case "1":
+                    if (item is Weapon weapon1)
+                    {
+                        player.EquipWeapon(weapon1);
+                    }
+                    else if (item is Armor armor1)
+                    {
+                        player.EquipArmor(armor1);
+                    }
+                    else if (item is UsableItem usableItem)
+                    {
+                        usableItem.Use(player);
+                        player.Inventory.Remove(item);
+                    }
+                    break;
+                case "2":
+                    player.Inventory.Remove(item);
+                    Console.WriteLine($"Предмет {item.Name} выброшен");
+                    break;
+            }
+
+            Console.WriteLine("Нажмите любую клавишу, чтобы продолжить...");
+            Console.ReadKey(true);
+        }
+
+        private void EquipItem()
+        {
+            Console.Clear();
+            Console.WriteLine("=== Экипировка ===");
+
+            List<Item> equipableItems = new List<Item>();
+
+            for (int i = 0;  i < player.Inventory.Count; i++)
+            {
+                if (player.Inventory[i] is Weapon || player.Inventory[i] is Armor)
+                {
+                    equipableItems.Add(player.Inventory[i]);
+                    string type = player.Inventory[i] is Weapon ? "[Оружие]" : "[Броня]";
+                    Console.WriteLine($"{equipableItems.Count} - {type} {player.Inventory[i].Name} - {player.Inventory[i].Description}");
+                }
+            }
+
+            if (equipableItems.Count == 0)
+            {
+                Console.WriteLine("У вас нет предметов, которые можно использовать");
+                Console.WriteLine("Нажмите любую клавишу, чтобы вернуться...");
+                Console.ReadKey(true);
+                return;
+            }
+
+            Console.WriteLine("0. Отмена");
+            Console.Write("\nВыберите предмет для экипировки: ");
+
+            if (int.TryParse(Console.ReadLine(), out int choice) && choice > 0 && choice <= equipableItems.Count)
+            {
+                Item item = equipableItems[choice - 1];
+
+                if (item is Weapon weapon)
+                {
+                    player.EquipWeapon(weapon);
+                }
+                else if (item is Armor armor)
+                {
+                    player.EquipArmor(armor);
+                }
+
+                Console.WriteLine("Нажмите любую клавишу, чтобы продолжить...");
+                Console.ReadKey(true);
+            }
+        }
+
+        private void UseItem()
+        {
+            Console.Clear();
+            Console.WriteLine("=== Использование предмета ===");
+
+            List<UsableItem> usableItems = new List<UsableItem>();
+
+            for (int i = 0;  i < player.Inventory.Count; i++)
+            {
+                if (player.Inventory[i] is UsableItem)
+                {
+                    usableItems.Add((UsableItem)player.Inventory[i]);
+                    Console.WriteLine($"{usableItems.Count} - {player.Inventory[i].Name} - {player.Inventory[i].Description}");
+                }
+            }
+
+            if (usableItems.Count == 0)
+            {
+                Console.WriteLine("У вас нет предметов, которые можно использовать");
+                Console.WriteLine("Нажмите любую клавишу, чтобы вернуться...");
+                Console.ReadKey(true);
+                return;
+            }
+
+            Console.WriteLine("0. Отмена");
+            Console.Write("\nВыберите предмет для использования: ");
+
+            if (int.TryParse(Console.ReadLine(), out int choice) && choice > 0 && choice <= usableItems.Count)
+            {
+                UsableItem item = usableItems[choice - 1];
+                item.Use(player);
+                player.Inventory.Remove(item);
+
+                Console.WriteLine("Нажмите любую клавишу, чтобы продолжить...");
+                Console.ReadKey(true);
+            }
         }
 
         private Item GenerateRandomItem()
