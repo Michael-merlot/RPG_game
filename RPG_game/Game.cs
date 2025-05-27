@@ -22,18 +22,26 @@ namespace RPG_game
 
         private void InitializeGame()
         {
-            Location village = new Location("Деревня", "Небольшая мирная деревушка. Здесь вы можете отдохнуть и набраться сил.");
+            Location village = new Location("Деревня", "Небольшая мирная деревушка. Здесь вы можете отдохнуть и набраться сил.", true);
             Location forest = new Location("Лес", "Густой темный лес. Говорят, здесь водятся опасные существа.");
             Location cave = new Location("Пещера", "Загадочная пещера в горах. Кто знает, какие сокровище скрыты внутри?");
+            Location dungeon = new Location("Подземелье", "Древние руины под землей. Говорят, что здесь можно найти ценные артефакты, но и опасные враги обитают тут.");
 
             world.Add(village);
             world.Add(forest);
             world.Add(cave);
+            world.Add(dungeon);
 
             village.AddNeighbor(forest);
             forest.AddNeighbor(village);
             forest.AddNeighbor(cave);
             cave.AddNeighbor(forest);
+            cave.AddNeighbor(dungeon);
+            dungeon.AddNeighbor(cave);
+
+            village.AddNPC(new Healer("Травница Елена", "Добрая женщина, которая может вылечить ваши раны за скромную плату.", 5));
+            village.AddNPC(new Trader("Кузнец Торим", "Крепкий мужчина с густой бородой. Торгует оружием и доспехами собственного изготовления."));
+            village.AddNPC(new Trader("Алхимик Маркус", "Странновый старик с блестящими глазами. Продает различные зелья и эликсиры."));
 
             currentLocation = village;
         }
