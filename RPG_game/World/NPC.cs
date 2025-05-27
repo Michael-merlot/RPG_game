@@ -95,9 +95,9 @@ namespace RPG_game
                 Thread.Sleep(1000);
                 Console.WriteLine("\n\"Всему своё время, странник.\"");
                 Thread.Sleep(1000);
-                Console.WriteLine("*Медленно и неуверенно уходите от мужчины, который провожает вас своим взглядом*");
+                Console.WriteLine("*Медленно и неуверенно уходите от женщины, который провожает вас своим взглядом*");
                 Thread.Sleep(1000);
-                Console.WriteLine("- Какой жуткий тип");
+                Console.WriteLine("- Какая жуткая... введьма что ли");
                 Thread.Sleep(1000);
 
                 Console.WriteLine("\nНажмите любую клавишу, чтобы продолжить...");
