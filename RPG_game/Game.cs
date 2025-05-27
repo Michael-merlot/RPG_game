@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Data.Common;
 using System.Linq;
+using System.Security;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -112,9 +113,34 @@ namespace RPG_game
                 Console.WriteLine($"- {neighbor.Name}");
             }
 
+            if (currentLocation.NPCs.Count > 0)
+            {
+                Console.WriteLine("\nЖители: ");
+
+                for (int i = 0; i < currentLocation.NPCs.Count; i++)
+                {
+                    Console.WriteLine($"- {currentLocation.NPCs[i].Name}");
+                }
+            }
+
             Console.WriteLine("\n--------------------------------------------");
             Console.WriteLine($"{player.Name} | Уровень: {player.Level} | Здоровье: {player.Health}/{player.MaxHealth}");
-            Console.WriteLine("\nДействия: [исследовать], [путешествовать], [инвентарь], [выход]");
+            // Console.WriteLine("\nДействия: [исследовать], [путешествовать], [инвентарь], [выход]");
+
+            Console.WriteLine("\nДействия: ");
+            Console.WriteLine("[путешествовать] - перейти в другую локацию");
+            Console.WriteLine("[инвентарь] - открыть инвентарь");
+
+            if (currentLocation.NPCs.Count > 0)
+            {
+                Console.WriteLine("[общаться] - поговорить с жителями");
+            }
+            if (!currentLocation.IsSafeZone)
+            {
+                Console.WriteLine("[исследовать] - искать приключений");
+            }
+
+            Console.WriteLine("[выход] - выйти из игры");
 
         }
 
@@ -129,7 +155,16 @@ namespace RPG_game
             switch (command)
             {
                 case "исследовать":
-                    Explore();
+                    if (!currentLocation.IsSafeZone)
+                    {
+                        Explore();
+                    }
+                    else
+                    {
+                        Console.WriteLine("Это безопасная зона. Здесь нечего исследовать.");
+                        Console.WriteLine("Нажмите любую клавишу, чтобы продолжить...");
+                        Console.ReadKey(true);
+                    }
                     break;
 
                 case "путешествовать":
@@ -138,6 +173,19 @@ namespace RPG_game
 
                 case "инвентарь":
                     ShowInventory();
+                    break;
+
+                case "общаться":
+                    if (currentLocation.NPCs.Count > 0)
+                    {
+                        TalkToNPC();
+                    }
+                    else
+                    {
+                        Console.WriteLine("Здесь никого нет");
+                        Console.WriteLine("Нажмите любую клавишу, чтобы продолжить...");
+                        Console.ReadKey(true);
+                    }
                     break;
 
                 case "выход":
@@ -152,6 +200,25 @@ namespace RPG_game
                     Console.WriteLine("Неизвестная команда. Попробуйте написать help для показа всех команд");
                     Console.ReadKey(true);
                     break;
+            }
+        }
+
+        private void TalkToNPC()
+        {
+            Console.Clear();
+            Console.WriteLine($"=== Жители {currentLocation.Name} ===");
+
+            for (int i = 0; i < currentLocation.NPCs.Count; i++)
+            {
+                Console.WriteLine($"{i + 1} - {currentLocation.NPCs[i].Name} - {currentLocation.NPCs[i].Description}");
+            }
+            Console.WriteLine("0. Вернуться");
+
+            Console.Write("\nС кем хотите поговорить: ");
+
+            if (int.TryParse(Console.ReadLine(), out int numberIndex) &&  numberIndex > 0 && numberIndex <= currentLocation.NPCs.Count)
+            {
+                currentLocation.NPCs[numberIndex - 1].Interact(player, this);
             }
         }
 
