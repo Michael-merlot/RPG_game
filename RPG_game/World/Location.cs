@@ -11,12 +11,17 @@ namespace RPG_game
         public string Name {  get; private set; }
         public string Description { get; private set; }
         public List<Location> Neighbors { get; private set; }
+        public bool IsSafeZone { get; private set; }
+        public List<NPC> NPCs { get; private set; }
 
-        public Location(string name, string description)
+
+        public Location(string name, string description, bool isSafeZone = false)
         {
             Name = name;
             Description = description;
+            IsSafeZone = isSafeZone;
             Neighbors = new List<Location>();
+            NPCs = new List<NPC>();
         }
 
         public void AddNeighbor(Location location)
@@ -25,6 +30,11 @@ namespace RPG_game
             {
                 Neighbors.Add(location);
             }
+        }
+
+        public void AddNPC(NPC npc)
+        {
+            NPCs.Add(npc);
         }
     }
 }
