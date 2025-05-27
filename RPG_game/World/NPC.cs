@@ -173,10 +173,230 @@ namespace RPG_game
                 int value = 10 + tier * 20 + random.Next(-5, 6);
 
                 string tierPrefix = tier == 1 ? "Обычн" : (tier == 2 ? "Качественн" : "Отличн");
-                string fullName = $"{tierPrefix}{(name.StartsWith("А") || name.StartsWith("А") || name.StartsWith("А") || name.StartsWith("А") || name.StartsWith("А") 
+                string fullName = $"{tierPrefix}{(name.StartsWith("А") || name.StartsWith("О") || name.StartsWith("У") || name.StartsWith("Э") || name.StartsWith("И") 
                     ? "ый" : "ая")} {name.ToLower()}";
 
                 inventory.Add(new Weapon(fullName, $"Урон: {damage}", damage, value));
+            }
+
+            string[] armorNames = { "Кожаная броня", "Кольчуга", "Стальной нагрудник", "Щит", "Шлем", "Поножи", "Наручи" };
+
+            for (int i = 0;i < 3; i++)
+            {
+                string name = armorNames[random.Next(armorNames.Length)];
+                int tier = random.Next(1, 4);
+                int defense = 1 + tier * 2 + random.Next(-1, 2);
+                int value = 10 + tier * 15 + random.Next(-5, 6);
+
+                string tierPrefix = tier == 1 ? "Обычн" : (tier == 2 ? "Качественн" : "Отличн");
+                string fullName = $"{tierPrefix}{(name.StartsWith("А") || name.StartsWith("О") || name.StartsWith("У") || name.StartsWith("Э") || name.StartsWith("И")
+                    ? "ый" : "ая")} {name.ToLower()}";
+
+                inventory.Add(new Armor(fullName, $"Защита: {defense}", defense, value));
+            }
+
+            string[] potionNames = { "Малое зелье здоровья", "Среднее зелье здоровья", "Большое зелье здоровья" };
+            int[] healAmounts = { 30, 60, 100 };
+            int[] potionValues = { 15, 30, 50 };
+
+            for (int i = 0; i < potionNames.Length; i++)
+            {
+                inventory.Add(new HealthPotion(potionNames[i], $"Восстанавливает {healAmounts[i]} здоровья", healAmounts[i], potionValues[i]));
+            }
+        }
+
+        public override void Interact(Player player, Game game)
+        {
+            bool exitTranding = false;
+
+            while (!exitTranding)
+            {
+                Console.Clear();
+                Console.WriteLine($"=== Торговец {Name} ===");
+                Console.WriteLine(Description);
+                Console.WriteLine($"\nВаше золото: {player.Gold}");
+
+                Console.WriteLine("=== Действия ===");
+                Console.WriteLine("1. Купить товары");
+                Console.WriteLine("2. Продать предметы");
+                Console.WriteLine("0. Выйти");
+
+                Console.Write("\nВаш выбор: ");
+                string choice = Console.ReadLine();
+
+                switch (choice)
+                {
+                    case "1":
+                        BuyItems(player);
+                        break;
+                    case "2":
+                        SellItems(player);
+                        break;
+                    case "0":
+                        exitTranding = true;
+                        break;
+                    default:
+                        Console.WriteLine("Неверный выбор. Нажмите любую клавишу...");
+                        Console.ReadKey(true);
+                        break;
+                }
+            }
+        }
+
+        private void SellItems(Player player)
+        {
+            if (player.Inventory.Count == 0)
+            {
+                Console.WriteLine("У вас нет предметов для продажи");
+                Console.WriteLine("Нажмите любую клавишу, чтобы продолжить...");
+                Console.ReadKey(true);
+                return;
+            }
+
+            Console.Clear();
+            Console.WriteLine("=== Продажа предметов ===");
+            Console.WriteLine($"Ваше золото: ");
+
+            for (int i = 0; i < player.Inventory.Count; i++)
+            {
+                int sellPrice = player.Inventory[i].Value / 2;
+                Console.WriteLine($"{i + 1} - {player.Inventory[i].Name} - {player.Inventory[i].Description} - {player.Inventory[i].Value} золота");
+            }
+
+            Console.WriteLine("0. Назад");
+
+            Console.Write("\nВыберите предмет для продажи (номер): ");
+
+            if (int.TryParse(Console.ReadLine(), out int selectedIndex) && selectedIndex > 0 && selectedIndex <= player.Inventory.Count)
+            {
+                Item selectedItem = player.Inventory[selectedIndex - 1];
+                int sellPrice = selectedItem.Value / 2;
+
+                Console.WriteLine($"Вы уверены, что хотите продать {selectedItem.Name} за {sellPrice} золота? (д/н)");
+
+                if (Console.ReadLine().ToLower().StartsWith("д"))
+                {
+                    player.Gold += sellPrice;
+                    player.Inventory.Remove(selectedItem);
+
+                    Console.WriteLine($"\nВы продали {selectedItem} за {sellPrice} золота!");
+                    Console.WriteLine("Нажмите любую клавишу, чтобы продолжить...");
+                    Console.ReadKey(true);
+                }
+            }
+        }
+
+        private void BuyItems(Player player)
+        {
+            bool exitBuying = false;
+
+            while (!exitBuying)
+            {
+                Console.Clear();
+                Console.WriteLine("=== Товары на продажу ===");
+                Console.WriteLine($"Ваше золото: {player.Gold}");
+
+                Console.WriteLine($"\n=== Оружие ===");
+
+                int itemIndex = 1;
+
+                for (int i = 0; i < inventory.Count; i++)
+                {
+                    if (inventory[i] is Weapon)
+                    {
+                        Console.WriteLine($"{itemIndex} - {inventory[i].Name} - {inventory[i].Description} - {inventory[i].Value} золота");
+                        itemIndex++;
+                    }
+                }
+
+                Console.WriteLine("=== Броня ===");
+
+                for (int i = 0;i < inventory.Count; i++)
+                {
+                    if (inventory[i] is Armor)
+                    {
+                        Console.WriteLine($"{itemIndex} - {inventory[i].Name} - {inventory[i].Description} - {inventory[i].Value} золота");
+                        itemIndex++;
+                    }
+                }
+
+                Console.WriteLine("=== Зелья ===");
+
+                for (int i = 0; i <= inventory.Count; i++)
+                {
+                    if (inventory[i] is HealthPotion)
+                    {
+                        Console.WriteLine($"{itemIndex} - {inventory[i].Name} - {inventory[i].Description} - {inventory[i].Value} золота");
+                        itemIndex++;
+                    }
+                }
+
+                Console.WriteLine("0. Назад");
+
+                Console.Write("\nВыберите товар для покупки (номер): ");
+
+                if (int.TryParse(Console.ReadLine(), out int selectedIndex) && selectedIndex > 0 && selectedIndex <= inventory.Count)
+                {
+                    Item selectedItem = null;
+                    int counter = 1;
+
+                    for (int i = 0; i < inventory.Count; i++)
+                    {
+                        if (counter == selectedIndex)
+                        {
+                            selectedItem = inventory[i];
+                            break;
+                        }
+                        counter++;
+                    }
+
+                    if (selectedItem != null)
+                    {
+                        if (player.Gold >= selectedItem.Value)
+                        {
+                            Console.WriteLine($"Вы уверены, что хотите купить {selectedItem.Name} за {selectedItem.Value} золота? (д/н)");
+                            
+                            if (Console.ReadLine().ToLower().StartsWith("д"))
+                            {
+                                player.Gold -= selectedItem.Value;
+
+                                Item boughtItem;
+                                if (selectedItem is Weapon weapon)
+                                {
+                                    boughtItem = new Weapon(weapon.Name, weapon.Description, weapon.Damage, weapon.Value);
+                                }
+                                else if (selectedItem is Armor armor)
+                                {
+                                    boughtItem = new Armor(armor.Name, armor.Description, armor.Defense, armor.Value);
+                                }
+                                else if (selectedItem is HealthPotion potion)
+                                {
+                                    boughtItem = new HealthPotion(potion.Name, potion.Description, potion.HealAmount, potion.Value);
+                                }
+                                else
+                                {
+                                    boughtItem = new Item(selectedItem.Name, selectedItem.Description, selectedItem.Value);
+                                }
+
+                                player.AddItem(boughtItem);
+                                Console.WriteLine($"\nВы купили {selectedItem} за {selectedItem.Value} золота");
+
+                                Console.WriteLine("Нажмите любую клавишу, чтобы продолжить...");
+                                Console.ReadKey(true);
+                            }
+                        }
+                        else
+                        {
+                            Console.WriteLine("У вас недостаточно золота для этой покупки!");
+                            Console.WriteLine("Нажмите любую клавишу, чтобы продолжить...");
+                            Console.ReadKey(true);
+                        }
+                    }
+                }
+                else if (selectedIndex == 0)
+                {
+                    exitBuying = true;
+                }
             }
         }
     }
