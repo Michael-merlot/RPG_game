@@ -73,7 +73,7 @@ namespace RPG_game
                 $"\nСмотри, до тебя бывали такие же ребята, как и ты, но всех ждало только одно - смерть"
                 + $"\nПоэтому будь осторожен, может, тебе удастся дойти до... пх... пх... *связь прервана*");
 
-            Thread.Sleep(8000);
+            // Thread.Sleep(8000);
 
             Console.Write($"*Вы просыпаетесь на тропинке недалеко от Деревни*\n- Может следует туда сходить?");
             Console.WriteLine();
@@ -124,20 +124,24 @@ namespace RPG_game
             }
 
             Console.WriteLine("\n--------------------------------------------");
-            Console.WriteLine($"{player.Name} | Уровень: {player.Level} | Здоровье: {player.Health}/{player.MaxHealth}");
+            Console.WriteLine($"{player.Name} | Уровень: {player.Level} | Здоровье: {player.Health}/{player.MaxHealth} | Золото: {player.Gold}");
             // Console.WriteLine("\nДействия: [исследовать], [путешествовать], [инвентарь], [выход]");
 
             Console.WriteLine("\nДействия: ");
-            Console.WriteLine("[путешествовать] - перейти в другую локацию");
-            Console.WriteLine("[инвентарь] - открыть инвентарь");
+            Console.WriteLine("1. [путешествовать] - перейти в другую локацию");
+            Console.WriteLine("2. [инвентарь] - открыть инвентарь");
+
+            int optionNumber = 3;
 
             if (currentLocation.NPCs.Count > 0)
             {
-                Console.WriteLine("[общаться] - поговорить с жителями");
+                Console.WriteLine($"{optionNumber}. [общаться] - поговорить с жителями");
+                optionNumber++;
             }
             if (!currentLocation.IsSafeZone)
             {
-                Console.WriteLine("[исследовать] - искать приключений");
+                Console.WriteLine($"{optionNumber}. [исследовать] - искать приключений");
+                optionNumber++;
             }
 
             Console.WriteLine("[выход] - выйти из игры");
@@ -146,8 +150,36 @@ namespace RPG_game
 
         public string GetUserInput()
         {
-            Console.Write("\nВаше действие: ");
-            return Console.ReadLine().ToLower();
+            Console.Write("\nВаше действие (введите номер): ");
+            string input = Console.ReadLine();
+
+            switch (input)
+            {
+                case "1":
+                    return "путешествовать";
+                case "2":
+                    return "инвентарь";
+                case "3":
+                    if (currentLocation.NPCs.Count > 0)
+                    {
+                        return "общаться";
+                    }
+                    else if (!currentLocation.IsSafeZone)
+                    {
+                        return "исследовать";
+                    }
+                    break;
+                case "4":
+                    if (currentLocation.NPCs.Count > 0 && !currentLocation.IsSafeZone)
+                    {
+                        return "исследовать";
+                    }
+                    break;
+                case "0":
+                    return "выход";
+            }
+
+            return input;
         }
 
         private void ProcessCommand(string command)
@@ -214,7 +246,7 @@ namespace RPG_game
             }
             Console.WriteLine("0. Вернуться");
 
-            Console.Write("\nС кем хотите поговорить: ");
+            Console.Write("\nС кем хотите поговорить (введите номер): ");
 
             if (int.TryParse(Console.ReadLine(), out int numberIndex) &&  numberIndex > 0 && numberIndex <= currentLocation.NPCs.Count)
             {
@@ -224,35 +256,28 @@ namespace RPG_game
 
         private void Explore()
         {
+            if (currentLocation.IsSafeZone)
+            {
+                Console.WriteLine("Это безопасная зона. Здесь нечего исследовать");
+                Console.WriteLine("Нажмите любую клавишу, чтобы продолжить...");
+                Console.ReadKey(true);
+                return;
+            }
+
             Console.Clear();
             Console.WriteLine($"Вы исследуете: {currentLocation.Name}");
 
             Random random = new Random();
-            int eventType = random.Next(10);
+            int eventType;
 
-            switch (eventType)
+            if (currentLocation.Name == "подземелье")
             {
-                case 0:
-                case 1:
-                case 2:
-                    Console.WriteLine("Вы ничего не нашли здесь");
-                    break;
-                case 3:
-                case 4:
-                    int gold = random.Next(1, 10);
-                    player.Gold = gold;
-                    Console.WriteLine($"Вы нашли: {gold} золота!");
-                    break;
-                case 5:
-                    Item foundItem = GenerateRandomItem();
-                    player.AddItem(foundItem);
-                    break;
-                case 6:
-                case 7:
-                case 8:
-                case 9:
+                eventType = random.Next(60);
+
+                if (eventType < 60)
+                {
                     Enemy enemy = EnemyFactory.CreateRandomEnemy(currentLocation.Name, player.Level);
-                    Console.WriteLine($"Вы столкнулись с врагом: {enemy.Name}!");
+                    Console.WriteLine($"Вы столкнулись с врагом: {enemy.Name}");
                     Console.WriteLine("Нажмите любую клавишу, чтобы начать бой...");
                     Console.ReadKey(true);
 
@@ -264,8 +289,54 @@ namespace RPG_game
                         isRunning = false;
                         return;
                     }
+                }
+                else if (eventType < 80)
+                {
+                    Item foundItem = GenerateRandomItem();
+                    player.AddItem(foundItem);
+                }
+                else
+                {
+                    int gold = random.Next(10, 31) + player.Level * 2;
+                    player.Gold += gold;
+                    Console.WriteLine($"Вы нашли {gold} золота!");
+                }
+            }
+            else
+            {
+                eventType = random.Next(100);
 
-                    break;
+                if ( eventType < 40)
+                {
+                    Console.WriteLine($"Вы ничего не нашли интересного");
+                }
+                else if (eventType < 70)
+                {
+                    Enemy enemy = EnemyFactory.CreateRandomEnemy(currentLocation.Name, player.Level);
+                    Console.WriteLine($"Вы столкнулись с врагом: {enemy.Name}");
+                    Console.WriteLine("Нажмите любую клавишу, чтобы начать бой...");
+                    Console.ReadKey(true);
+
+                    CombatSystem combatSystem = new CombatSystem();
+                    bool playerWon = combatSystem.StartCombat(player, enemy);
+
+                    if (!playerWon)
+                    {
+                        isRunning = false;
+                        return;
+                    }
+                }
+                else if (eventType < 85)
+                {
+                    Item foundItem = GenerateRandomItem();
+                    player.AddItem(foundItem);
+                }
+                else
+                {
+                    int gold = random.Next(5, 16) + player.Level;
+                    player.Gold += gold;
+                    Console.WriteLine($"Вы нашли {gold} золота!");
+                }
             }
 
             Console.WriteLine("Нажмите любую клавишу для продолжения...");
@@ -275,6 +346,7 @@ namespace RPG_game
         private void Travel()
         {
             Console.Clear();
+            Console.WriteLine("=== Путешествие ===");
             Console.WriteLine("Куда вы хотите отправиться?");
 
             for (int i = 0; i < currentLocation.Neighbors.Count; i++)
@@ -283,7 +355,8 @@ namespace RPG_game
             }
 
             Console.WriteLine("0. Вернуться");
-            Console.Write("\nВаш выбор: ");
+
+            Console.Write("\nВаш выбор (введите номер): ");
 
             if (int.TryParse(Console.ReadLine(), out int choice) && choice > 0 && choice <= currentLocation.Neighbors.Count)
             {
@@ -528,7 +601,7 @@ namespace RPG_game
             }
         }
 
-        private Item GenerateRandomItem()
+        private Item GenerateRandomItem(bool isRare = false)
         {
             Random random = new Random();
             int itemType = random.Next(3);
@@ -537,21 +610,67 @@ namespace RPG_game
             {
                 case 0:
                     string[] weaponNames = { "Кинжал", "Короткий меч", "Топор", "Булава", "Лук" };
-                    string weaponName = weaponNames[random.Next(weaponNames.Length)];
-                    int damage = 3 + random.Next(1, 4) + player.Level;
+                    string[] rareWeaponNames = { "Эльфийский клинок", "Двуручный меч", "Боевой топор", "Магический посох", "Композитный лук" };
+
+                    string weaponName;
+                    int damage;
+
+                    if (isRare && random.Next(100) < 40)
+                    {
+                        weaponName = rareWeaponNames[random.Next(weaponNames.Length)];
+                        damage = 5 + random.Next(3, 7) + player.Level;
+                    }
+                    else
+                    {
+                        weaponName = rareWeaponNames[random.Next(weaponNames.Length)];
+                        damage = 5 + random.Next(1, 4) + player.Level;
+                    }
+
                     return new Weapon(weaponName, $"Урон: {damage}", damage, damage * 5);
 
                 case 1:
                     string[] armorNames = { "Кожаная куртка", "Кольчуга", "Щит", "Стальной нагрудник", "Шлем" };
-                    string armorName = armorNames[random.Next(armorNames.Length)];
-                    int defense = 1 + random.Next(1, 3) + player.Level / 2;
+                    string[] rareArmorsNames = { "Мифриловая кольчуга", "Эльфийский плащ", "Башенный щит", "Доспех рыцаря", "Шлем стража"};
+
+                    string armorName;
+                    int defense;
+
+                    if (isRare && random.Next(100) < 40)
+                    {
+                        armorName = rareArmorsNames[random.Next(armorNames.Length)];
+                        defense = 5 + random.Next(2, 5) + player.Level / 2;
+                    }
+                    else
+                    {
+                        armorName = rareArmorsNames[random.Next(armorNames.Length)];
+                        defense = 5 + random.Next(1, 3) + player.Level / 2;
+                    }
+
                     return new Armor(armorName, $"Защита: {defense}", defense, defense * 8);
 
                 case 2:
                 default:
-                    int healAmount = 15 + random.Next(5, 16) + player.Level * 3;
-                    return new HealthPotion("Зелье здоровья", $"Восстанавливает {healAmount} здоровья", healAmount, healAmount / 2);
+                    int healAmount;
+                    string potionName;
+
+                    if (isRare && random.Next(100) < 40)
+                    {
+                        healAmount = 40 + random.Next(10, 31) + player.Level * 4;
+                        potionName = "Большое зелье здоровья";
+                    }
+                    else
+                    {
+                        healAmount = 15 + random.Next(5, 16) + player.Level * 2;
+                        potionName = "Зелье здоровья";
+                    }
+
+                    return new HealthPotion(potionName, $"Восстанавливает {healAmount} здоровья", healAmount, healAmount / 2);
             }
+        }
+
+        public void UpdateGame()
+        {
+
         }
     }
 }
