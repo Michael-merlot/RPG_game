@@ -14,6 +14,7 @@ namespace RPG_game
         private Enemy enemy;
         private Random random;
         private bool isCombatActive;
+        private bool playerDefensing = false;
 
         public CombatSystem()
         {
@@ -66,8 +67,9 @@ namespace RPG_game
 
                 Console.WriteLine("\nВаш ход. Выберите действие: ");
                 Console.WriteLine("1. Атаковать");
-                Console.WriteLine("2. Использовать предмет");
-                Console.WriteLine("3. Попытаться сбежать");
+                Console.WriteLine("2. Защититься");
+                Console.WriteLine("3. Использовать предмет");
+                Console.WriteLine("4. Попытаться сбежать");
 
                 Console.Write("\nВаш выбор: ");
                 string choice = Console.ReadLine();
@@ -76,23 +78,31 @@ namespace RPG_game
                 {
                     case "1":
                         PlayerAttack();
+                        playerDefensing = false;
                         turnCompleted = true;
                         break;
 
                     case "2":
+                        PlayerDefend();
+                        turnCompleted=true;
+                        break;
+
+                    case "3":
                         if (UseItem())
                         {
+                            playerDefensing = false;
                             turnCompleted = true;
                         }
                         break;
 
-                    case "3":
+                    case "4":
                         if (TryEscape())
                         {
                             return false;
                         }
                         else
                         {
+                            playerDefensing = false;
                             turnCompleted = true;
                         }
                         break;
@@ -107,7 +117,15 @@ namespace RPG_game
             return true;
 
         }
-        
+
+        private void PlayerDefend()
+        {
+            playerDefensing = true;
+            Console.WriteLine("Вы приняли защитную стойку, уменьшив урон до следующего хода.");
+            Console.WriteLine("Нажмите любую клавишу, чтобы продолжить...");
+            Console.ReadKey(true);
+        }
+
         private void PlayerAttack()
         {
             int damageBase = player.GetAttackDamage();
@@ -200,6 +218,13 @@ namespace RPG_game
                 damage = random.Next((int)(damage * 0.8), (int)(damage * 1.2) + 1);
 
                 int actualDamage = Math.Max(1, damage - player.GetDefense());
+
+                if (playerDefensing)
+                {
+                    actualDamage = Math.Max(1, actualDamage / 2);
+                    Console.WriteLine("Ваша защитная стойка снижает получаемый урон!");
+                }
+
                 player.Health -= actualDamage;
 
                 Console.WriteLine($"{enemy.Name} атакует вас и наносит {actualDamage} урона!");
@@ -223,11 +248,25 @@ namespace RPG_game
             Console.WriteLine($"{player.Name}:");
             DisplayHealthBar(player.Health, player.MaxHealth, ConsoleColor.Green);
             Console.WriteLine($"Здоровье: {player.Health}/{player.MaxHealth} | Атака: {player.GetAttackDamage()} | Защита: {player.GetDefense()}");
+
+            if (playerDefensing)
+            {
+                Console.ForegroundColor = ConsoleColor.Cyan;
+                Console.WriteLine("Статус: защитная стойка (получаемый урон снижен на 50%)");
+                Console.ResetColor();
+            }
             Console.WriteLine();
 
             Console.WriteLine($"{enemy.Name}:");
             DisplayHealthBar(enemy.Health, enemy.MaxHealth, ConsoleColor.Red);
             Console.WriteLine($"Здоровье: {enemy.Health}/{enemy.MaxHealth} | Атака: {enemy.GetAttackDamage()} | Защита: {enemy.Defense + enemy.DefenseBonus}");
+
+            if (enemy.DefenseBonus > 0)
+            {
+                Console.ForegroundColor = ConsoleColor.Cyan;
+                Console.WriteLine("Статус: Защитная стойка");
+                Console.ResetColor();
+            }
             Console.WriteLine();
         }
 
