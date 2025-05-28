@@ -36,7 +36,7 @@ namespace RPG_game
             Console.WriteLine(Description);
 
             int healAmount = player.MaxHealth - player.Health;
-            int totalCost = 0;
+            int totalCost;
 
             if (healCost > 0)
             {
@@ -181,7 +181,7 @@ namespace RPG_game
 
             string[] armorNames = { "Кожаная броня", "Кольчуга", "Стальной нагрудник", "Щит", "Шлем", "Поножи", "Наручи" };
 
-            for (int i = 0;i < 3; i++)
+            for (int i = 0; i < 3; i++)
             {
                 string name = armorNames[random.Next(armorNames.Length)];
                 int tier = random.Next(1, 4);
@@ -199,7 +199,7 @@ namespace RPG_game
             int[] healAmounts = { 30, 60, 100 };
             int[] potionValues = { 15, 30, 50 };
 
-            for (int i = 0; i < potionNames.Length; i++)
+            for (int i = 0; i < 3; i++)
             {
                 inventory.Add(new HealthPotion(potionNames[i], $"Восстанавливает {healAmounts[i]} здоровья", healAmounts[i], potionValues[i]));
             }
@@ -311,7 +311,7 @@ namespace RPG_game
 
                 Console.WriteLine("=== Броня ===");
 
-                for (int i = 0;i < inventory.Count; i++)
+                for (int i = 0; i < inventory.Count; i++)
                 {
                     if (inventory[i] is Armor)
                     {
@@ -322,7 +322,7 @@ namespace RPG_game
 
                 Console.WriteLine("=== Зелья ===");
 
-                for (int i = 0; i <= inventory.Count; i++)
+                for (int i = 0; i < inventory.Count; i++)
                 {
                     if (inventory[i] is HealthPotion)
                     {
@@ -361,6 +361,7 @@ namespace RPG_game
                                 player.Gold -= selectedItem.Value;
 
                                 Item boughtItem;
+
                                 if (selectedItem is Weapon weapon)
                                 {
                                     boughtItem = new Weapon(weapon.Name, weapon.Description, weapon.Damage, weapon.Value);
@@ -379,7 +380,7 @@ namespace RPG_game
                                 }
 
                                 player.AddItem(boughtItem);
-                                Console.WriteLine($"\nВы купили {selectedItem} за {selectedItem.Value} золота");
+                                Console.WriteLine($"\nВы купили {boughtItem} за {selectedItem.Value} золота");
 
                                 Console.WriteLine("Нажмите любую клавишу, чтобы продолжить...");
                                 Console.ReadKey(true);
