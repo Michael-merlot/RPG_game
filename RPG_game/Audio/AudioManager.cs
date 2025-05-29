@@ -14,8 +14,8 @@ namespace RPG_game
     {
         private static AudioManager instance;
         private Dictionary<string, string> musicTracks;
-        private IWavePlayer musicPlayer;
-        private AudioManager currentMusicReader;
+        private WaveOutEvent musicPlayer;
+        private AudioFileReader currentMusicReader;
         private string currentTrack;
         private bool isMusicEnabled = true;
         private float volume = 0.5f;
@@ -126,7 +126,7 @@ namespace RPG_game
 
                 if (!File.Exists(filePath))
                 {
-                    DisplayMusicStatus($"{nameTrack}", Console.ForegroundColor = ConsoleColor.DarkGray);
+                    DisplayMusicStatus($"{nameTrack}", ConsoleColor.DarkGray);
                     currentTrack = nameTrack;
                     return;
                 }
