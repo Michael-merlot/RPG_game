@@ -28,8 +28,11 @@ namespace RPG_game
         public int RewardExp { get; private set; }
 
         private DateTime unlockTime;
+        private bool wasChecked = false;
+        private bool onlyCheckOnce;
+        public bool RewardGiven { get; private set; } = false;
 
-        public Achievement(string id, string name, string description, AchievementType type, int progressRequired, int rewardGold, int rewardExp)
+        public Achievement(string id, string name, string description, AchievementType type, int progressRequired, int rewardGold, int rewardExp, bool onlyCheckOnce = false)
         {
             Id = id;
             Name = name;
@@ -40,6 +43,7 @@ namespace RPG_game
             ProgressRequired = progressRequired;
             RewardGold = rewardGold;
             RewardExp = rewardExp;
+            this.onlyCheckOnce = onlyCheckOnce; 
         }
         public Achievement(string id, string name, string description, AchievementType type, int rewardGold, int rewardExp) : this (id, name, description, type, 1, rewardGold, rewardExp)
         {
@@ -47,8 +51,9 @@ namespace RPG_game
         }
         public void UpdateProgress(int amount)
         {
-            if (IsUnlocked) { return; }
+            if (IsUnlocked || (onlyCheckOnce && wasChecked)) { return; }
 
+            wasChecked = onlyCheckOnce;
             ProgressCurrent += amount;
 
             if (ProgressCurrent >= ProgressRequired)
@@ -77,17 +82,20 @@ namespace RPG_game
         }
         public void GiveReward(Player player)
         {
-            if (!IsUnlocked) { return; }
+            if (!IsUnlocked || RewardGiven) return;
+
+            RewardGiven = true;
 
             player.Gold += RewardGold;
             player.AddExperience(RewardExp);
 
             Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine($"\nПолучена награда за достижение \"{Name}\": ");
+            Console.WriteLine($"\nПолучена награда за достижение \"{Name}\":");
             Console.WriteLine($"+ {RewardGold} золота");
             Console.WriteLine($"+ {RewardExp} опыта");
             Console.ResetColor();
         }
+
         public string GetProgressString()
         {
             if (IsUnlocked)

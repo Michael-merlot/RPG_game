@@ -97,9 +97,14 @@ namespace RPG_game
             {
                 DisplayCurrnetLocation();
                 string command = GetUserInput();
+
+                bool isViewingCommand = command == "журнал заданий" || command == "достижения" || command == "настройки";
                 ProcessCommand(command);
 
-                achievementManager.CheckAchievements();
+                if (!isViewingCommand)
+                {
+                    achievementManager.CheckAchievements();
+                }
 
                 if (player.Health <= 0 )
                 {
@@ -176,9 +181,17 @@ namespace RPG_game
             {
                 case "1":
                     return "путешествовать";
+
                 case "2":
                     return "инвентарь";
+
                 case "3":
+                    return "журнал заданий";
+
+                case "4":
+                    return "достижения";
+
+                case "5":
                     if (currentLocation.NPCs.Count > 0)
                     {
                         return "общаться";
@@ -188,12 +201,14 @@ namespace RPG_game
                         return "исследовать";
                     }
                     break;
-                case "4":
-                    if (currentLocation.NPCs.Count > 0 && !currentLocation.IsSafeZone)
+
+                case "6":
+                    if (!currentLocation.IsSafeZone)
                     {
                         return "исследовать";
                     }
                     break;
+
                 case "0":
                     return "выход";
             }
@@ -302,7 +317,7 @@ namespace RPG_game
             Random random = new Random();
             int eventType;
 
-            if (currentLocation.Name == "подземелье")
+            if (currentLocation.Name.ToLower() == "подземелье")
             {
                 eventType = random.Next(60);
 
@@ -695,7 +710,7 @@ namespace RPG_game
                     }
                     else
                     {
-                        weaponName = rareWeaponNames[random.Next(weaponNames.Length)];
+                        weaponName = weaponNames[random.Next(weaponNames.Length)];
                         damage = 5 + random.Next(1, 4) + player.Level;
                     }
 
@@ -715,7 +730,7 @@ namespace RPG_game
                     }
                     else
                     {
-                        armorName = rareArmorsNames[random.Next(armorNames.Length)];
+                        armorName = armorNames[random.Next(armorNames.Length)];
                         defense = 5 + random.Next(1, 3) + player.Level / 2;
                     }
 

@@ -10,6 +10,7 @@ namespace RPG_game
     {
         private List<Achievement> achievements;
         private Player player;
+        private bool isCheckingAchievement = false;
 
         public AchievementManager(Player player)
         {
@@ -27,21 +28,23 @@ namespace RPG_game
             achievements.Add(new Achievement("kill_boss", "Истребитель демонов", "Победите любого босса", AchievementType.Combat, 1, 100, 150));
             achievements.Add(new Achievement("kill_all_bosses", "Легенда", "Победите всех боссов", AchievementType.Combat, 3, 300, 500));
 
-            achievements.Add(new Achievement("collect_gold", "Охотник за сокровищами", "Соберите 500 золота", AchievementType.Collection, 500, 50, 50));
+            achievements.Add(new Achievement("collect_gold", "Охотник за сокровищами", "Соберите 500 золота", AchievementType.Collection, 500, 50, 50, onlyCheckOnce: true));
             achievements.Add(new Achievement("collect_items", "Коллекционер", "Соберите 15 предметов", AchievementType.Collection, 15, 30, 40));
 
             achievements.Add(new Achievement("complete_quest", "Помощник", "Выполните первое задание", AchievementType.Quest, 1, 20, 30));
             achievements.Add(new Achievement("complete_quests", "Герой города", "Выполните 5 заданий", AchievementType.Quest, 5, 100, 150));
 
-            achievements.Add(new Achievement("reach_level", "Наставник", "Достигните 10 уровня", AchievementType.Special, 10, 100, 200));
+            achievements.Add(new Achievement("reach_level", "Первые шаги", "Достигните 2 уровня", AchievementType.Special, 2, 50, 100));
+            achievements.Add(new Achievement("master_level", "Наставник", "Достигните 10 уровня", AchievementType.Special, 10, 100, 200));
         }
         public void UpdateAchievement(string achievementId, int amount = 1)
         {
             foreach (Achievement achievement in achievements)
             {
-                if (achievement.Id == achievementId)
+                if (achievement.Id == achievementId && !achievement.IsUnlocked)
                 {
                     achievement.UpdateProgress(amount);
+
                     if (achievement.IsUnlocked)
                     {
                         achievement.GiveReward(player);
@@ -99,9 +102,39 @@ namespace RPG_game
         }
         public void CheckAchievements()
         {
-            UpdateAchievement("reach_level", player.Level);
-            UpdateAchievement("collect_gold", player.Gold);
-            UpdateAchievement("collect_items", player.Inventory.Count);
+            foreach (Achievement achievement in achievements)
+            {
+                if (!achievement.IsUnlocked)
+                {
+                    switch (achievement.Id)
+                    {
+                        case "reach_level":
+                            if (player.Level >= 2)
+                            {
+                                achievement.Unlock();
+                                achievement.GiveReward(player);
+                            }
+                            break;
+
+                        case "master_level":
+                            if (player.Level >= 10)
+                            {
+                                achievement.Unlock();
+                                achievement.GiveReward(player);
+                            }
+                            break;
+
+                        case "collect_gold":
+                            if (player.Gold >= 500)
+                            {
+                                achievement.Unlock();
+                                achievement.GiveReward(player);
+                            }
+                            break;
+                            
+                    }
+                }
+            }
         }
         public int GetUnlockedCount()
         {
