@@ -15,6 +15,8 @@ namespace RPG_game
         private bool isRunning;
         private List<Location> world;
         private Location currentLocation;
+        private QuestManager questManager;
+        private AchievementManager achievementManager;
         public Game()
         {
             isRunning = false;
@@ -44,6 +46,7 @@ namespace RPG_game
             village.AddNPC(new Healer("Травница Елена", "Добрая женщина, которая может вылечить ваши раны за скромную плату.", 5));
             village.AddNPC(new Trader("Кузнец Торим", "Крепкий мужчина с густой бородой. Торгует оружием и доспехами собственного изготовления."));
             village.AddNPC(new Trader("Алхимик Маркус", "Странновый старик с блестящими глазами. Продает различные зелья и эликсиры."));
+            village.AddNPC(new Trader("Лесник", "Опытный охотник и следопыт, хорошо знающий лес."));
 
             currentLocation = village;
         }
@@ -72,6 +75,10 @@ namespace RPG_game
 
             player = new Player(name, 100, 1);
 
+            achievementManager = new AchievementManager(player);
+            questManager = new QuestManager(player);
+            InitializeQuests();
+
             Console.WriteLine($"Здравствуй, {name}! Похоже... ты здесь впервые, я прав? " +
                 $"\nСмотри, до тебя бывали такие же ребята, как и ты, но всех ждало только одно - смерть"
                 + $"\nПоэтому будь осторожен, может, тебе удастся дойти до... пх... пх... *связь прервана*");
@@ -91,6 +98,8 @@ namespace RPG_game
                 DisplayCurrnetLocation();
                 string command = GetUserInput();
                 ProcessCommand(command);
+
+                achievementManager.CheckAchievements();
 
                 if (player.Health <= 0 )
                 {
@@ -128,15 +137,20 @@ namespace RPG_game
                 }
             }
 
-            Console.WriteLine("\n--------------------------------------------");
-            Console.WriteLine($"{player.Name} | Уровень: {player.Level} | Здоровье: {player.Health}/{player.MaxHealth} | Золото: {player.Gold}");
-            // Console.WriteLine("\nДействия: [исследовать], [путешествовать], [инвентарь], [выход]");
+            Console.WriteLine("\n============================================");
+            Console.WriteLine($"{player.Name} | Уровень: {player.Level} | Здоровье: {player.Health}/{player.MaxHealth} | Золото: {player.Gold}");   
+            if (questManager.GetActiveQuestCount() > 0)
+            {
+                Console.WriteLine($"Активные квесты: {questManager.GetActiveQuestCount()}");
+            }
 
             Console.WriteLine("\nДействия: ");
             Console.WriteLine("1. [путешествовать] - перейти в другую локацию");
             Console.WriteLine("2. [инвентарь] - открыть инвентарь");
+            Console.WriteLine("3. [Журнал заданий] - просмотреть активные квесты");
+            Console.WriteLine("4. [Достижения] - просмотреть прогресс достижений");
 
-            int optionNumber = 3;
+            int optionNumber = 5;
 
             if (currentLocation.NPCs.Count > 0)
             {
@@ -149,7 +163,7 @@ namespace RPG_game
                 optionNumber++;
             }
 
-            Console.WriteLine("[выход] - выйти из игры");
+            Console.WriteLine("0. [выход] - выйти из игры");
 
         }
 
@@ -210,6 +224,15 @@ namespace RPG_game
 
                 case "инвентарь":
                     ShowInventory();
+                    break;
+
+                case "журнал заданий":
+                case "квесты":
+                    questManager.DisplayActiveQuests();
+                    break;
+
+                case "достижения":
+                    achievementManager.DisplayAchievements();
                     break;
 
                 case "общаться":
@@ -334,6 +357,12 @@ namespace RPG_game
                         isRunning = false;
                         return;
                     }
+
+                    if (playerWon)
+                    {
+                        questManager.UpdateQuestProgress(QuestType.Kill, enemy.Name, 1);
+                        achievementManager.UpdateAchievement("kill_enemies", 1);
+                    }
                 }
                 else if (eventType < 85)
                 {
@@ -348,6 +377,7 @@ namespace RPG_game
                 }
             }
 
+            questManager.UpdateQuestProgress(QuestType.Explore, currentLocation.Name, 1);
             Console.WriteLine("Нажмите любую клавишу для продолжения...");
             Console.ReadKey(true);
         }
@@ -709,6 +739,56 @@ namespace RPG_game
 
                     return new HealthPotion(potionName, $"Восстанавливает {healAmount} здоровья", healAmount, healAmount / 2);
             }
+        }
+
+        private void InitializeQuests()
+        {
+            // квест на убийство волков
+            Quest wolfQuest = new Quest("wolf_hunt", "Охота на волков", "Лесник сообщает, что в лесу слишком много волков. Нужно избавиться от нескольких.",
+                QuestType.Kill, GetLocationByName("Лес"), GetNPCByName("Лесник"), 30, 50);
+            wolfQuest.AddObjective("Убить волка", 3);
+            wolfQuest.AddItemReward(new HealthPotion("Большое зелье здоровья", "Восстанавливает 60 здоровья", 60, 30));
+
+            // квест на изучение пещеры
+            Quest caveQuest = new Quest("cave_explore", "Тайны пещеры", "Алхимик Маркус интересуется странными кристаллами, которые можно найти в пещере.",
+                QuestType.Explore, GetLocationByName("Пещера"), GetNPCByName("Алхимик Маркус"), 40, 70);
+            caveQuest.AddObjective("Исследовать глубины пещеры", 1);
+            caveQuest.AddItemReward(new Weapon("Зачарованный кинжал", "Магическое оружие алхимика", 8, 45));
+
+            // квест на победу над боссом
+            Quest bossQuest = new Quest("dungeon_boss", "Древнее зло", "Кузнец Торим слышал о древнем страже, обитающем в подземелье. Он просит избавиться от этой угрозы.",
+    QuestType.Boss, GetLocationByName("Подземелье"), GetNPCByName("Кузнец Торим"), 100, 200);
+            bossQuest.AddObjective("Победить Древнего Стража", 1);
+            bossQuest.AddItemReward(new Armor("Доспех героя", "Мощная броня, выкованная кузнецом в благодарность", 10, 120));
+
+            questManager.AddQuest(wolfQuest);
+            questManager.AddQuest(caveQuest);
+            questManager.AddQuest(bossQuest);
+
+            GetNPCByName("Лесник").AddQuest(wolfQuest);
+            GetNPCByName("Алхимик Маркус").AddQuest(caveQuest);
+            GetNPCByName("Кузнец Торим").AddQuest(bossQuest);
+        }
+
+        private NPC GetNPCByName(string name)
+        {
+            foreach (Location location in world)
+            {
+                foreach (NPC npc in location.NPCs)
+                {
+                    if (npc.Name == name) return npc;
+                }
+            }
+            return null;
+        }
+
+        private Location GetLocationByName(string name)
+        {
+            foreach (Location location in world)
+            {
+                if (location.Name == name) return location;
+            }
+            return null;
         }
 
         private void ShowSettings()
