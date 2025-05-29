@@ -1,4 +1,5 @@
-﻿using System;
+﻿using NAudio.MediaFoundation;
+using System;
 using System.Collections.Generic;
 using System.Data.Common;
 using System.Linq;
@@ -49,6 +50,8 @@ namespace RPG_game
 
         public void Start()
         {
+
+            AudioManager.Instance.PlayMusic("Меню");
             CreateCharacter();
 
             isRunning = true;
@@ -106,6 +109,8 @@ namespace RPG_game
             Console.WriteLine($"=== {currentLocation.Name} ===");
             Console.WriteLine(currentLocation.Description);
             Console.WriteLine("=======================================");
+
+            AudioManager.Instance.PlayMusic(currentLocation.Name);
 
             Console.WriteLine("\nДоступные пути: ");
             foreach (Location neighbor in currentLocation.Neighbors)
@@ -218,6 +223,10 @@ namespace RPG_game
                         Console.WriteLine("Нажмите любую клавишу, чтобы продолжить...");
                         Console.ReadKey(true);
                     }
+                    break;
+
+                case "настройки":
+                    ShowSettings();
                     break;
 
                 case "выход":
@@ -700,6 +709,111 @@ namespace RPG_game
 
                     return new HealthPotion(potionName, $"Восстанавливает {healAmount} здоровья", healAmount, healAmount / 2);
             }
+        }
+
+        private void ShowSettings()
+        {
+            bool exitSettings = false;
+
+            while (!exitSettings)
+            {
+                Console.Clear();
+                Console.WriteLine("=== Настройки игры ===");
+                Console.WriteLine($"\n1. Музыка: {(AudioManager.Instance.IsMusicEnabled() ? "Включена" : "Отключена")}");
+                Console.WriteLine($"2. Громкость: {(int)(AudioManager.Instance.GetVolume() * 100)}%");
+                Console.WriteLine($"3. Информация об аудио");
+                Console.WriteLine("0. Назад");
+
+                Console.Write("\nВыберите настройку (номер): ");
+                string choice = Console.ReadLine();
+
+                switch (choice)
+                {
+                    case "1":
+                        ToggleMusic();
+                        break;
+
+                    case "2":
+                        AdjustMusic();
+                        break;
+
+                    case "3":
+                        ShowAudioInfo();
+                        break;
+
+                    case "0":
+                        exitSettings = true;
+                        break;
+
+                    default:
+                        Console.WriteLine("Неверный выбор. Нажмите любую клавишу...");
+                        Console.ReadKey();
+                        break;
+                }
+
+            }
+        }
+
+        private void ToggleMusic()
+        {
+            bool currentState = AudioManager.Instance.IsMusicEnabled();
+            AudioManager.Instance.SetMusicEnabled(!currentState);
+
+            if (!currentState)
+            {
+                AudioManager.Instance.PlayMusic(currentLocation.Name);
+            }
+
+            Console.WriteLine("Нажмите любую клавишу, чтобы продолжить...");
+            Console.ReadKey(true);
+        }
+
+        private void AdjustMusic()
+        {
+            Console.Clear();
+            Console.WriteLine("=== Настройка громкости ===");
+            Console.WriteLine("\nВыберите уровень громкости: ");
+            Console.WriteLine("1. Тихо (25%)");
+            Console.WriteLine("2. Средне (50%)");
+            Console.WriteLine("3. Громко (75%)");
+            Console.WriteLine("4. Максимально (100%)");
+            Console.WriteLine("0. Назад");
+
+            Console.Write("\nВаш выбор: ");
+            string choice = Console.ReadLine();
+
+            float newVolume = AudioManager.Instance.GetVolume();
+
+            switch (choice)
+            {
+                case "1":
+                    newVolume = 0.25f;
+                    break;
+
+                case "2":
+                    newVolume = 0.5f;
+                    break;
+
+                case "3":
+                    newVolume = 0.75f;
+                    break;
+
+                case "4":
+                    newVolume = 1.0f;
+                    break;
+            }
+
+            AudioManager.Instance.SetVolume(newVolume);
+            Console.WriteLine("Нажмите любую клавишу, чтобы продолжить...");
+            Console.ReadKey(true);
+        }
+
+        private void ShowAudioInfo()
+        {
+            Console.Clear();
+            AudioManager.Instance.ShowAudioStatus();
+            Console.WriteLine("Нажмите любую клавишу, чтобы вернуться...");
+            Console.ReadKey(true);
         }
 
         public void UpdateGame()
