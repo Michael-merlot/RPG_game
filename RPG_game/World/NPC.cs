@@ -11,13 +11,34 @@ namespace RPG_game
         public string Name { get; protected set; }
         public string Description { get; protected set; }
 
+        public List<Quest> AvailableQuest { get; protected set; }
+        public List<Quest> CompletableQuest { get; protected set; }
+
         public NPC(string name, string description)
         {
             Name = name;
             Description = description;
+            AvailableQuest = new List<Quest>();
+            CompletableQuest = new List<Quest>();
         }
 
         public abstract void Interact(Player player, Game game);
+
+        public void AddQuest(Quest quest)
+        {
+            AvailableQuest.Add(quest);
+        }
+        public void UpdateQuestLists(QuestManager questManager)
+        {
+            CompletableQuest.Clear();
+            foreach (Quest quest in questManager.GetActiveQuests())
+            {
+                if (quest.QuestGiver == this && quest.IsReadyToComplete())
+                {
+                    CompletableQuest.Add(quest);
+                }
+            }
+        }
     }
 
     public class Healer : NPC
