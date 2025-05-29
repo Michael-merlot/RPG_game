@@ -24,7 +24,7 @@ namespace RPG_game
         public Armor EquippedArmor { get; private set; }
         
         public List<Item> Inventory { get; set; }
-
+        AchievementManager AchievementManager { get; set; }
         public Player(string name, int health, int level)
         {
             Name = name;
@@ -106,6 +106,7 @@ namespace RPG_game
             Health = MaxHealth;
             Console.WriteLine($"Здоровье полностью восстановлено: {Health}/{MaxHealth}");
 
+            AchievementManager.UpdateAchievement("reach_level", 1);
             Console.WriteLine("\nНажмите на любую клавишу для продолжения...");
             Console.ReadKey(true);
         }
