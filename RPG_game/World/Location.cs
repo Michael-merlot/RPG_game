@@ -13,6 +13,8 @@ namespace RPG_game
         public List<Location> Neighbors { get; private set; }
         public bool IsSafeZone { get; private set; }
         public List<NPC> NPCs { get; private set; }
+        public Boss Boss { get; private set; }
+        public bool BossDefeated { get; private set; }
 
 
         public Location(string name, string description, bool isSafeZone = false)
@@ -23,7 +25,6 @@ namespace RPG_game
             Neighbors = new List<Location>();
             NPCs = new List<NPC>();
         }
-
         public void AddNeighbor(Location location)
         {
             if (!Neighbors.Contains(location))
@@ -31,10 +32,25 @@ namespace RPG_game
                 Neighbors.Add(location);
             }
         }
-
         public void AddNPC(NPC npc)
         {
             NPCs.Add(npc);
+        }
+        public void SetBoss(Boss boss)
+        {
+            Boss = boss;
+        }
+        public void DefeatBoss()
+        {
+            BossDefeated = true;
+            if (Boss != null)
+            {
+                Boss.Defeat();
+            }
+        }
+        public bool HasUnderfeatedBoss()
+        {
+            return Boss != null && !BossDefeated;
         }
     }
 }
