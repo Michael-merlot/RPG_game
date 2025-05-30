@@ -21,21 +21,21 @@ namespace RPG_game
 
         private void InitializeAchievements()
         {
-            achievements.Add(new Achievement("explore_all", "Исследователь мира", "Посетите все локации", AchievementType.Exploration, 4, 50, 100));
-            achievements.Add(new Achievement("explore_dungeon", "Искатель приключений", "Исследуйте подземелье", AchievementType.Exploration, 1, 20, 30));
+            achievements.Add(new Achievement("explore_all", "Исследователь мира", "Посетите все локации. ", AchievementType.Exploration, 4, 50, 100));
+            achievements.Add(new Achievement("explore_dungeon", "Искатель приключений", "Исследуйте подземелье. ", AchievementType.Exploration, 1, 20, 30));
 
-            achievements.Add(new Achievement("kill_enemies", "Боевое крещение", "Победите 10 врагов", AchievementType.Combat, 10, 30, 50));
-            achievements.Add(new Achievement("kill_boss", "Истребитель демонов", "Победите любого босса", AchievementType.Combat, 1, 100, 150));
-            achievements.Add(new Achievement("kill_all_bosses", "Легенда", "Победите всех боссов", AchievementType.Combat, 3, 300, 500));
+            achievements.Add(new Achievement("kill_enemies", "Боевое крещение", "Победите 10 врагов. ", AchievementType.Combat, 10, 30, 50));
+            achievements.Add(new Achievement("kill_boss", "Истребитель демонов", "Победите любого босса. ", AchievementType.Combat, 1, 100, 150));
+            achievements.Add(new Achievement("kill_all_bosses", "Легенда", "Победите всех боссов. ", AchievementType.Combat, 3, 300, 500));
 
-            achievements.Add(new Achievement("collect_gold", "Охотник за сокровищами", "Соберите 500 золота", AchievementType.Collection, 500, 50, 50, onlyCheckOnce: true));
-            achievements.Add(new Achievement("collect_items", "Коллекционер", "Соберите 15 предметов", AchievementType.Collection, 15, 30, 40));
+            achievements.Add(new Achievement("collect_gold", "Охотник за сокровищами", "Соберите 500 золота. ", AchievementType.Collection, 500, 50, 50, onlyCheckOnce: true));
+            achievements.Add(new Achievement("collect_items", "Коллекционер", "Соберите 15 предметов. ", AchievementType.Collection, 15, 30, 40));
 
-            achievements.Add(new Achievement("complete_quest", "Помощник", "Выполните первое задание", AchievementType.Quest, 1, 20, 30));
-            achievements.Add(new Achievement("complete_quests", "Герой города", "Выполните 5 заданий", AchievementType.Quest, 5, 100, 150));
+            achievements.Add(new Achievement("complete_quest", "Помощник", "Выполните первое задание. ", AchievementType.Quest, 1, 20, 30));
+            achievements.Add(new Achievement("complete_quests", "Герой города", "Выполните 5 заданий. ", AchievementType.Quest, 5, 100, 150));
 
-            achievements.Add(new Achievement("reach_level", "Первые шаги", "Достигните 2 уровня", AchievementType.Special, 2, 50, 100));
-            achievements.Add(new Achievement("master_level", "Наставник", "Достигните 10 уровня", AchievementType.Special, 10, 100, 200));
+            achievements.Add(new Achievement("reach_level", "Первые шаги", "Достигните 2 уровня. ", AchievementType.Special, 2, 50, 100));
+            achievements.Add(new Achievement("master_level", "Наставник", "Достигните 10 уровня. ", AchievementType.Special, 10, 100, 200));
         }
         public void UpdateAchievement(string achievementId, int amount = 1)
         {
