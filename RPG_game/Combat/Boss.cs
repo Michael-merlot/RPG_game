@@ -14,8 +14,8 @@ namespace RPG_game
         public List<Item> GuaranteedLoot { get; private set; }
         public bool IsDefeated { get; private set; }
         public int SpecialAttackChance { get; private set; }
-        public int PhaceCount { get; private set; }
-        public int CurrentPhase { get; private set; }
+        public int PhaceCount { get; set; }
+        public int CurrentPhase { get; set; }
 
         public Boss(string name, string description, string title, int level) : base(name, description, level)
         {
