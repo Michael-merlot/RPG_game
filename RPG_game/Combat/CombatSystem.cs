@@ -15,10 +15,12 @@ namespace RPG_game
         private Random random;
         private bool isCombatActive;
         private bool playerDefensing = false;
+        AchievementManager achievementManager;
 
-        public CombatSystem()
+        public CombatSystem(AchievementManager achievementManager = null)
         {
             random = new Random();
+            this.achievementManager = achievementManager;
         }
 
         public bool StartCombat(Player player, Enemy enemy)
@@ -31,6 +33,18 @@ namespace RPG_game
             Console.WriteLine($"=== Бой ===");
             Console.WriteLine($"=== {player.Name} VS {enemy.Name} ===");
             Console.WriteLine($"{enemy.Description}");
+
+            Boss boss = enemy as Boss;
+            if ( boss != null )
+            {
+                Console.ForegroundColor = ConsoleColor.Yellow;
+                Console.WriteLine($"\n!!! Битва с Боссом !!!");
+                Console.WriteLine(boss.IntroText);
+                Console.ResetColor();
+
+                AudioManager.Instance.PlayMusic("Битва");
+            }
+
             Console.WriteLine("\nНажмите любую клавишу, чтобы продолжить...");
             Console.ReadKey();
 
@@ -40,8 +54,18 @@ namespace RPG_game
 
                 if (enemy.Health <= 0)
                 {
+                    if (boss != null)
+                    {
+                        boss.Defeat();
+                    }
+
                     EndCombat(true);
                     return true;
+                }
+
+                if (boss != null && boss.ShouldChangePhase())
+                {
+                    boss.NextPhase();
                 }
 
                 EnemyTurn();
@@ -211,28 +235,62 @@ namespace RPG_game
             DisplayCombatStatus();
             Console.WriteLine($"\nХод противника: {enemy.Name}");
 
-            if (random.Next(100) < 80)
+            Boss boss = enemy as Boss;
+
+            if (boss != null)
             {
-                int damage = enemy.GetAttackDamage();
-
-                damage = random.Next((int)(damage * 0.8), (int)(damage * 1.2) + 1);
-
-                int actualDamage = Math.Max(1, damage - player.GetDefense());
-
-                if (playerDefensing)
+                if (random.Next(100) < boss.SpecialAttackChance)
                 {
-                    actualDamage = Math.Max(1, actualDamage / 2);
-                    Console.WriteLine("Ваша защитная стойка снижает получаемый урон!");
+                    int damage = boss.PerformSpecialAttack();
+                    int actualDamage = Math.Max(1, damage - player.GetDefense());
+                    if (playerDefensing)
+                    {
+                        actualDamage = Math.Max(1, actualDamage / 2);
+                        Console.WriteLine($"Ваша защитная стойка снижает получаемый урон!");
+                    }
+
+                    player.Health -= actualDamage;
+                    Console.WriteLine($"Вы получаете {actualDamage} урона от особой атаки босса");
                 }
+                else
+                {
+                    int damage = enemy.GetAttackDamage();
+                    int actualDamage = Math.Max(1, damage - player.GetDefense());
+                    if (playerDefensing)
+                    {
+                        actualDamage = Math.Max(1, actualDamage / 2);
+                        Console.WriteLine($"Ваша защитная стойка снижает получаемый урон!");
+                    }
 
-                player.Health -= actualDamage;
-
-                Console.WriteLine($"{enemy.Name} атакует вас и наносит {actualDamage} урона!");
+                    player.Health -= actualDamage;
+                    Console.WriteLine($"{enemy.Name} атакует вас и наносит {actualDamage} урона!");
+                }
             }
             else
             {
-                enemy.DefenseBonus = random.Next(1, 4);
-                Console.WriteLine($"{enemy.Name} принимает защитную стойку (+{enemy.DefenseBonus} к защите)");
+                if (random.Next(100) < 80)
+                {
+                    int damage = enemy.GetAttackDamage();
+
+                    damage = random.Next((int)(damage * 0.8), (int)(damage * 1.2) + 1);
+
+                    int actualDamage = Math.Max(1, damage - player.GetDefense());
+
+                    if (playerDefensing)
+                    {
+                        actualDamage = Math.Max(1, actualDamage / 2);
+                        Console.WriteLine("Ваша защитная стойка снижает получаемый урон!");
+                    }
+
+                    player.Health -= actualDamage;
+
+                    Console.WriteLine($"{enemy.Name} атакует вас и наносит {actualDamage} урона!");
+                }
+                else
+                {
+                    enemy.DefenseBonus = random.Next(1, 4);
+                    Console.WriteLine($"{enemy.Name} принимает защитную стойку (+{enemy.DefenseBonus} к защите)");
+                }
             }
 
             Console.WriteLine("Нажмите любую клавишу для продолжения...");
@@ -301,33 +359,82 @@ namespace RPG_game
 
             if (playerWon)
             {
-                Console.WriteLine("=== Победа ===");
-                Console.WriteLine($"Вы победили: {enemy.Name}");
+                Boss boss = enemy as Boss;
 
-                int expReward = enemy.ExpReward;
-                int goldReward = enemy.GoldReward;
-
-                player.AddExperience(expReward);
-                player.Gold += goldReward;
-
-                Console.WriteLine($"Получено опыта: {expReward}");
-                Console.WriteLine($"Получено золота: {goldReward}");
-
-                if (random.Next(100) < 30)
+                if (boss != null)
                 {
-                    Item loot = GenerateLoot();
-                    player.AddItem(loot);
-                    Console.WriteLine($"Найден предмет: {loot.Name}");
+                    Console.ForegroundColor = ConsoleColor.Yellow;
+                    Console.WriteLine($"=== Великая победа над боссом! ===");
+                    Console.WriteLine(boss.DefeatText);
+                    Console.ResetColor();
+
+                    AudioManager.Instance.PlaySoundEffect("Победа");
+
+                    int expReward = boss.ExpReward;
+                    int goldReward = boss.GoldReward;
+                    Console.WriteLine($"Получено опыта: {expReward}");
+                    Console.WriteLine($"Получено золота: {goldReward}");
+
+                    if (boss.GuaranteedLoot.Count > 0)
+                    {
+                        Console.ForegroundColor = ConsoleColor.Magenta;
+                        Console.WriteLine($"\n=== Особоая награда от босса!");
+                        Console.ResetColor();
+
+                        foreach (Item item in boss.GuaranteedLoot)
+                        {
+                            player.AddItem(item);
+                            Console.WriteLine($"Получен предмет: {item.Name} - {item.Description}");
+                        }
+                    }
+
+                    if (achievementManager != null)
+                    {
+                        achievementManager.UpdateAchievement("kill_boss", 1);
+
+                        if (CheckAllBossesDefeated())
+                        {
+                            achievementManager.UpdateAchievement("kill_all_bosses", 1);
+                        }
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("=== Победа ===");
+                    Console.WriteLine($"Вы победили: {enemy.Name}");
+
+                    int expReward = enemy.ExpReward;
+                    int goldReward = enemy.GoldReward;
+
+                    player.AddExperience(expReward);
+                    player.Gold += goldReward;
+
+                    Console.WriteLine($"Получено опыта: {expReward}");
+                    Console.WriteLine($"Получено золота: {goldReward}");
+
+                    if (random.Next(100) < 30)
+                    {
+                        Item loot = GenerateLoot();
+                        player.AddItem(loot);
+                        Console.WriteLine($"Найден предмет: {loot.Name}");
+                    }
                 }
             }
             else
             {
                 Console.WriteLine("=== Поражение ===");
                 Console.WriteLine($"Вы пали в бою с {enemy.Name}");
+
+                AudioManager.Instance.PlaySoundEffect("Поражение");
             }
 
             Console.WriteLine($"\nНажмите любую клавишу для продолжения...");
             Console.ReadKey(true);
+        }
+
+        private bool CheckAllBossesDefeated()
+        {
+            return false;
         }
 
         private Item GenerateLoot()
