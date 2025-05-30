@@ -31,6 +31,10 @@ namespace RPG_game
             Location cave = new Location("Пещера", "Загадочная пещера в горах. Кто знает, какие сокровище скрыты внутри?");
             Location dungeon = new Location("Подземелье", "Древние руины под землей. Говорят, что здесь можно найти ценные артефакты, но и опасные враги обитают тут.");
 
+            forest.SetBoss(BossFactory.CreateForestGiant(1));
+            cave.SetBoss(BossFactory.CreateSpiderQueen(2));
+            dungeon.SetBoss(BossFactory.CreateAncientGuardin(3));
+
             world.Add(village);
             world.Add(forest);
             world.Add(cave);
@@ -142,6 +146,22 @@ namespace RPG_game
                 }
             }
 
+            if (currentLocation.Boss != null)
+            {
+                if (currentLocation.BossDefeated)
+                {
+                    Console.ForegroundColor = ConsoleColor.DarkGray;
+                    Console.WriteLine($"\n[Босс {currentLocation.Boss.Title} {currentLocation.Boss.Name} побежден] ");
+                    Console.ResetColor();
+                }
+                else
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine($"\n[ВНИМАНИЕ: В этой локации обитает могущественный босс: {currentLocation.Boss.Title} {currentLocation.Boss.Name}] ");
+                    Console.ResetColor();
+                }
+            }
+
             Console.WriteLine("\n============================================");
             Console.WriteLine($"{player.Name} | Уровень: {player.Level} | Здоровье: {player.Health}/{player.MaxHealth} | Золото: {player.Gold}");   
             if (questManager.GetActiveQuestCount() > 0)
@@ -155,7 +175,7 @@ namespace RPG_game
             Console.WriteLine("3. [Журнал заданий] - просмотреть активные квесты");
             Console.WriteLine("4. [Достижения] - просмотреть прогресс достижений");
 
-            int optionNumber = 5;
+            int optionNumber = 6;
 
             if (currentLocation.NPCs.Count > 0)
             {
@@ -165,6 +185,11 @@ namespace RPG_game
             if (!currentLocation.IsSafeZone)
             {
                 Console.WriteLine($"{optionNumber}. [исследовать] - искать приключений");
+                optionNumber++;
+            }
+            if (!currentLocation.IsSafeZone && currentLocation.HasUnderfeatedBoss())
+            {
+                Console.WriteLine($"{optionNumber} [бросить вызов боссу] - сразиться с хозяином этих земель");
                 optionNumber++;
             }
 
@@ -206,6 +231,13 @@ namespace RPG_game
                     if (!currentLocation.IsSafeZone)
                     {
                         return "исследовать";
+                    }
+                    break;
+
+                case "7":
+                    if (!currentLocation.IsSafeZone && currentLocation.HasUnderfeatedBoss())
+                    {
+                        return "бросить вызов боссу";
                     }
                     break;
 
@@ -263,6 +295,19 @@ namespace RPG_game
                     }
                     break;
 
+                case "бросить вызов боссу":
+                    if (!currentLocation.IsSafeZone && currentLocation.HasUnderfeatedBoss())
+                    {
+                        FightBoss();
+                    }
+                    else
+                    {
+                        Console.WriteLine("В этой локации нет босса или он уже побежден.");
+                        Console.WriteLine("Нажмите любую клавишу...");
+                        Console.ReadKey(true);
+                    }
+                    break;
+
                 case "настройки":
                     ShowSettings();
                     break;
@@ -281,7 +326,30 @@ namespace RPG_game
                     break;
             }
         }
+        private void FightBoss()
+        {
+            Console.Clear();
+            Console.WriteLine("Вы решили бросить вызов хозяину этих земель");
 
+            Boss boss = currentLocation.Boss;
+            if (boss == null && currentLocation.BossDefeated)
+            {
+                Console.WriteLine("В этой локации нет босса или он уже побежден.");
+                Console.WriteLine("Нажмите любую клавишу...");
+                Console.ReadKey(true);
+                return;
+            }
+
+            Console.WriteLine("\nПосле долгих поисков вы находите логово босса.");
+            Console.WriteLine($"\nПеред вами предстает {boss.Title} {boss.Name}");
+            Console.WriteLine(boss.Description);
+
+            Console.WriteLine("\nГотовы ли вы сразиться с этим могущественным противником?");
+            Console.WriteLine("1. Да, я готов к битве");
+            Console.WriteLine("2. Нет, я вернусь позже");
+
+            Console.Write("\n");
+        }
         private void TalkToNPC()
         {
             Console.Clear();
@@ -804,6 +872,18 @@ namespace RPG_game
                 if (location.Name == name) return location;
             }
             return null;
+        }
+
+        public bool CheckAllBossesDefeated()
+        {
+            foreach (Location location in world)
+            {
+                if (location.HasUnderfeatedBoss())
+                {
+                    return false;
+                }
+            }
+            return true;
         }
 
         private void ShowSettings()
