@@ -112,13 +112,23 @@ namespace RPG_game
 
         public void PlayMusic(string nameTrack)
         {
-            if (!isMusicEnabled) {  return; }
+            if (!isMusicEnabled)
+            {
+                return;
+            }
 
-            if (currentTrack == nameTrack && musicPlayer?.PlaybackState == PlaybackState.Playing) { return; } // ?. - musicPlayer = null (условие не проверяется) 
+            if (currentTrack == nameTrack && musicPlayer?.PlaybackState == PlaybackState.Playing)
+            {
+                return;
+            }
 
             StopMusic();
 
-            if (!musicTracks.ContainsKey(nameTrack)) { return; }
+            if (!musicTracks.ContainsKey(nameTrack))
+            {
+                Console.WriteLine($"Трек \"{nameTrack}\" не найден в словаре треков");
+                return;
+            }
 
             try
             {
@@ -126,28 +136,40 @@ namespace RPG_game
 
                 if (!File.Exists(filePath))
                 {
-                    DisplayMusicStatus($"{nameTrack}", ConsoleColor.DarkGray);
+                    DisplayMusicStatus($"♪ {nameTrack} (файл не найден) ♪", ConsoleColor.DarkGray);
                     currentTrack = nameTrack;
                     return;
                 }
 
+                if (musicPlayer == null)
+                {
+                    Console.WriteLine("musicPlayer равен null, инициализируем");
+                    musicPlayer = new WaveOutEvent();
+                }
+
                 currentMusicReader = new AudioFileReader(filePath);
                 currentMusicReader.Volume = volume;
-
+                musicPlayer.PlaybackStopped -= OnPlaybackStopped;
                 musicPlayer.Init(currentMusicReader);
                 musicPlayer.Play();
                 currentTrack = nameTrack;
-
                 musicPlayer.PlaybackStopped += OnPlaybackStopped;
-
-                DisplayMusicStatus($"{nameTrack}", ConsoleColor.Cyan);
+                DisplayMusicStatus($"♪ {nameTrack} ♪", ConsoleColor.Cyan);
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Произошла ошибка воспроизведения: {ex.Message}");
+                Console.WriteLine($"Подробности: {ex.GetType().Name} - {ex.StackTrace}");
+
                 currentTrack = null;
+
+                if (ex.InnerException != null)
+                {
+                    Console.WriteLine($"Внутреннее исключение: {ex.InnerException.Message}");
+                }
             }
         }
+
 
         public void StopMusic()
         {
@@ -173,19 +195,53 @@ namespace RPG_game
 
         private void OnPlaybackStopped(object sender, StoppedEventArgs e)
         {
-            if (currentMusicReader != null && currentTrack != null)
+            try
             {
-                try
+                if (currentMusicReader == null)
+                {
+                    Console.WriteLine("OnPlaybackStopped: currentMusicReader равен null");
+                    return;
+                }
+
+                if (musicPlayer == null)
+                {
+                    Console.WriteLine("OnPlaybackStopped: musicPlayer равен null");
+                    return;
+                }
+
+                if (!string.IsNullOrEmpty(currentTrack))
                 {
                     currentMusicReader.Position = 0;
                     musicPlayer.Play();
+                    Console.WriteLine($"Зацикливание трека: {currentTrack}");
                 }
-                catch (Exception ex)
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Ошибка при зацикливании: {ex.Message}");
+
+                try
                 {
-                    Console.WriteLine($"Ошибка при зацикливании: {ex.Message}");
+                    if (currentTrack != null && musicTracks.ContainsKey(currentTrack))
+                    {
+                        string filePath = musicTracks[currentTrack];
+                        if (File.Exists(filePath) && musicPlayer != null)
+                        {
+                            currentMusicReader = new AudioFileReader(filePath);
+                            currentMusicReader.Volume = volume;
+                            musicPlayer.Init(currentMusicReader);
+                            musicPlayer.Play();
+                            Console.WriteLine("Воспроизведение восстановлено");
+                        }
+                    }
                 }
-            }     
+                catch (Exception innerEx)
+                {
+                    Console.WriteLine($"Не удалось восстановить воспроизведение: {innerEx.Message}");
+                }
+            }
         }
+
 
         private void DisplayMusicStatus(string message, ConsoleColor color)
         {
