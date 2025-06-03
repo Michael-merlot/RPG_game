@@ -68,6 +68,7 @@ namespace RPG_game
             IsUnlocked=true;
             ProgressCurrent = ProgressRequired;
             unlockTime = DateTime.Now;
+            AudioManager.Instance.PlayMusic("Победа");
             DisplayUnlockNotification();
         }
         private void DisplayUnlockNotification()

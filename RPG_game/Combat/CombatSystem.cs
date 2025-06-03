@@ -13,14 +13,17 @@ namespace RPG_game
         private Player player;
         private Enemy enemy;
         private Random random;
+        Location currentLocation;
         private bool isCombatActive;
         private bool playerDefensing = false;
-        AchievementManager achievementManager;
+        private AchievementManager achievementManager;
+        private Game game;
 
-        public CombatSystem(AchievementManager achievementManager = null)
+        public CombatSystem(AchievementManager achievementManager = null, Game game = null)
         {
             random = new Random();
             this.achievementManager = achievementManager;
+            this.game = game;
         }
 
         public bool StartCombat(Player player, Enemy enemy)
@@ -28,6 +31,8 @@ namespace RPG_game
             this.player = player;
             this.enemy = enemy;
             isCombatActive = true;
+
+            AudioManager.Instance.PlayMusic("Битва");
 
             Console.Clear();
             Console.WriteLine($"=== Бой ===");
@@ -359,6 +364,7 @@ namespace RPG_game
 
             if (playerWon)
             {
+                AudioManager.Instance.PlayMusic("Победа");
                 Boss boss = enemy as Boss;
 
                 if (boss != null)
@@ -422,6 +428,7 @@ namespace RPG_game
             }
             else
             {
+                AudioManager.Instance.PlayMusic("Поражение");
                 Console.WriteLine("=== Поражение ===");
                 Console.WriteLine($"Вы пали в бою с {enemy.Name}");
 
@@ -434,6 +441,10 @@ namespace RPG_game
 
         private bool CheckAllBossesDefeated()
         {
+            if (game != null)
+            {
+                return game.CheckAllBossesDefeated();
+            }
             return false;
         }
 

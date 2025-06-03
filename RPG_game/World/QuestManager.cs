@@ -40,7 +40,17 @@ namespace RPG_game
             {
                 if (quest.Type == type)
                 {
-                    quest.UpdateProgress(targetName, amount);
+                    if (type == QuestType.Boss)
+                    {
+                        if (quest.Objectives.ContainsKey($"Победить {targetName}"))
+                        {
+                            quest.UpdateProgress($"Победить {targetName}", 1);
+                        }
+                    }
+                    else if (quest.Objectives.ContainsKey(targetName))
+                    {
+                        quest.UpdateProgress(targetName, amount);
+                    }
                 }
             }
         }

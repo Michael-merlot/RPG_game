@@ -228,6 +228,8 @@ namespace RPG_game
 
         public override void Interact(Player player, Game game)
         {
+            string previousTrack = AudioManager.Instance.GetCurrentTrack();
+            AudioManager.Instance.PlayMusic("Деревня");
             bool exitTranding = false;
 
             while (!exitTranding)
