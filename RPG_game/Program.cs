@@ -11,6 +11,9 @@ namespace RPG_game
         static void Main(string[] args)
         {
             Console.Title = "Тесктовая RPG-игра";
+
+            AudioManager.Instance.SetMusicEnabled(true);
+            AudioManager.Instance.SetVolume(0.7f);
             Console.WriteLine("=================================");
             Console.WriteLine("         Приключения героя");
             Console.WriteLine("=================================");
@@ -19,7 +22,6 @@ namespace RPG_game
             Console.ReadKey(true);
 
             Game game = new Game();
-
             game.Start();
         }
     }

@@ -57,6 +57,43 @@ namespace RPG_game
 
         public void Start()
         {
+            /*Console.WriteLine("=== Диагностика Аудиосистемы ===");
+            try
+            {
+                string musicFolder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Music");
+                Console.WriteLine($"Путь к папке с музыкой: {musicFolder}");
+                Console.WriteLine($"Папка существует: {Directory.Exists(musicFolder)}");
+
+                if (Directory.Exists(musicFolder))
+                {
+                    Console.WriteLine("Файлы в папке Music: ");
+                    foreach (string file in Directory.GetFiles(musicFolder))
+                    {
+                        Console.WriteLine($"- {Path.GetFileName(file)}");
+                    }
+                }
+
+                Console.WriteLine($"AudioManager существует: {AudioManager.Instance != null}");
+                Console.WriteLine($"Музыка включена: {AudioManager.Instance.IsMusicEnabled()}");
+                Console.WriteLine($"Громкость: {AudioManager.Instance.GetVolume()}");
+
+                Console.WriteLine("Пробуем воспроизвести музыку меню...");
+                AudioManager.Instance.PlayMusic("Меню");
+                Console.WriteLine($"Текущий трек: {AudioManager.Instance.GetCurrentTrack()}");
+
+                Console.WriteLine("===== КОНЕЦ ДИАГНОСТИКИ =====");
+                Console.WriteLine("Нажмите любую клавишу, чтобы продолжить...");
+                Console.ReadKey(true);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Ошибка при диагностике аудио: {ex.Message}");
+                Console.WriteLine($"Стек вызовов: {ex.StackTrace}");
+                Console.WriteLine("===== КОНЕЦ ДИАГНОСТИКИ =====");
+                Console.WriteLine("Нажмите любую клавишу, чтобы продолжить...");
+                Console.ReadKey(true);
+            }
+            */
 
             AudioManager.Instance.PlayMusic("Меню");
             CreateCharacter();
@@ -123,6 +160,7 @@ namespace RPG_game
 
         private void DisplayCurrnetLocation()
         {
+            AudioManager.Instance.PlayMusic(currentLocation.Name);
             Console.Clear();
             Console.WriteLine($"=== {currentLocation.Name} ===");
             Console.WriteLine(currentLocation.Description);
@@ -309,6 +347,7 @@ namespace RPG_game
                     break;
 
                 case "выход":
+                    AudioManager.Instance.StopMusic();
                     isRunning = false;
                     break;
 
@@ -327,6 +366,7 @@ namespace RPG_game
             Console.Clear();
             Console.WriteLine("Вы решили бросить вызов хозяину этих земель");
 
+
             Boss boss = currentLocation.Boss;
             if (boss == null && currentLocation.BossDefeated)
             {
@@ -344,7 +384,32 @@ namespace RPG_game
             Console.WriteLine("1. Да, я готов к битве");
             Console.WriteLine("2. Нет, я вернусь позже");
 
-            Console.Write("\n");
+            Console.Write("\nВаш выбор: ");
+            string choice = Console.ReadLine();
+
+            if (choice == "1")
+            {
+                AudioManager.Instance.PlayMusic("Битва");
+
+                CombatSystem combatSystem = new CombatSystem(achievementManager, this);
+                bool playerWon = combatSystem.StartCombat(player, currentLocation.Boss);
+
+                if (playerWon)
+                {
+                    currentLocation.DefeatBoss();
+                    if (questManager != null)
+                    {
+                        questManager.UpdateQuestProgress(QuestType.Boss, boss.Name, 1);
+                    }
+                }
+                AudioManager.Instance.PlayMusic(currentLocation.Name);
+            }
+            else
+            {
+                Console.WriteLine("\nВы решили отступить. Может быть, стоит лучше подготовиться.");
+                Console.WriteLine("Нажмите любую клавишу, чтобы продолжить...");
+                Console.ReadKey(true);
+            }
         }
         private void TalkToNPC()
         {
@@ -874,7 +939,7 @@ namespace RPG_game
         {
             foreach (Location location in world)
             {
-                if (location.HasUnderfeatedBoss())
+                if (location.Boss != null && !location.BossDefeated)
                 {
                     return false;
                 }
@@ -996,7 +1061,7 @@ namespace RPG_game
 
 /*
  * 1) Исправить RPG_Game.Weapon - при покупке предметов у торговцев
- * 2) Реализовать босса в игре и полностью подключить его к релизной версии
+ * 2) Реализовать босса в игре и полностью подключить его к релизной версии +
  * 3) Подключить музыку к игре и чтобы всё работало
  * 4) Пофиксить баг, когда получаешь уровень (или любое достижение), завершаешь настройку, продолжаешь и на долю секунды выскакивает сообщение о том, что получено 
  * Достижение и снова меню с выбором, где выбираешь [путешествовать] и тп
