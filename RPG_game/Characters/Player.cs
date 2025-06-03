@@ -68,6 +68,7 @@ namespace RPG_game
             Level++;
             Experience -= (Level - 1) * 100;
 
+            AudioManager.Instance.PlaySoundEffect("Победа");
             Console.WriteLine("\n=== Новый уровень! ===");
             Console.WriteLine($"Вы достигнули уровня {Level}");
 
